@@ -1,0 +1,88 @@
+{
+  "timestamp": "2025-08-30T22:56:21.320Z",
+  "summary": {
+    "totalComponents": 11,
+    "consistentComponents": 1,
+    "componentsWithIssues": 10,
+    "totalIssues": 12
+  },
+  "details": [
+    {
+      "component": "button.tsx",
+      "consistent": false,
+      "issues": [
+        "No classes found"
+      ]
+    },
+    {
+      "component": "card.tsx",
+      "consistent": false,
+      "issues": [
+        "No color classes found"
+      ]
+    },
+    {
+      "component": "input.tsx",
+      "consistent": false,
+      "issues": [
+        "No color classes found",
+        "No spacing classes found"
+      ]
+    },
+    {
+      "component": "form.tsx",
+      "consistent": false,
+      "issues": [
+        "No color classes found"
+      ]
+    },
+    {
+      "component": "dialog.tsx",
+      "consistent": false,
+      "issues": [
+        "No color classes found"
+      ]
+    },
+    {
+      "component": "theme-toggle.tsx",
+      "consistent": false,
+      "issues": [
+        "No color classes found",
+        "No typography classes found"
+      ]
+    },
+    {
+      "component": "partner-info.tsx",
+      "consistent": false,
+      "issues": [
+        "No primary color usage found"
+      ]
+    },
+    {
+      "component": "request-form.tsx",
+      "consistent": false,
+      "issues": [
+        "Light theme classes found but no dark theme classes"
+      ]
+    },
+    {
+      "component": "partner-lookup.tsx",
+      "consistent": true,
+      "issues": []
+    },
+    {
+      "component": "partner-portal.tsx",
+      "consistent": false,
+      "issues": [
+        "Light theme classes found but no dark theme classes"
+      ]
+    },
+    {
+      "component": "admin.tsx",
+      "consistent": false,
+      "issues": [
+        "Light theme classes found but no dark theme classes"
+      ]
+    }
+  ]
+}
