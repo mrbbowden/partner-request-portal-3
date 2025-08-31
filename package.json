@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "wrangler pages dev dist --compatibility-date=2024-01-01",
     "build": "vite build",
-    "deploy": "wrangler pages deploy dist",
+    "deploy": "wrangler pages deploy public/dist --branch=main",
     "deploy:full": "./deploy.sh",
     "deploy:safe": "./scripts/safe-deploy.sh",
     "start": "wrangler pages dev dist --compatibility-date=2024-01-01",
