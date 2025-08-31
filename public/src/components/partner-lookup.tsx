@@ -138,7 +138,7 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
               placeholder="0000"
               maxLength={4}
               value={partnerId}
-              onChange={(e) => setPartnerId(e.target.value.replace(/\D/g, ""))}
+              onChange={(e) => setPartnerId(e.target.value.toUpperCase().replace(/\D/g, ""))}
               onKeyPress={handleKeyPress}
               className="flex-1"
             />

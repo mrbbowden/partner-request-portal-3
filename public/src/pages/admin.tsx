@@ -533,7 +533,7 @@ function PartnerForm({
         <Input
           id="partnerId"
           value={formData.id}
-          onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, id: e.target.value.toUpperCase() })}
           placeholder="Enter partner ID (3-9 characters)"
           maxLength={9}
           required
