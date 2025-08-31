@@ -412,7 +412,6 @@ export default function AdminPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
                       <TableHead>Partner</TableHead>
                       <TableHead>Recipient</TableHead>
                       <TableHead>Address</TableHead>
@@ -423,7 +422,6 @@ export default function AdminPage() {
                   <TableBody>
                     {sortedRequests.map((request: Request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-mono">{request.id}</TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{request.partnerName}</p>
