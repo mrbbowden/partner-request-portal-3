@@ -16,6 +16,9 @@ const partnerUpdateSchema = z.object({
 export async function onRequest(context: any) {
   const { request, params, env } = context;
   const { id } = params;
+  
+  // Capitalize the partner ID for consistent searching
+  const capitalizedId = id.toUpperCase();
 
   // Check admin password
   const authHeader = request.headers.get("Authorization");
@@ -29,7 +32,7 @@ export async function onRequest(context: any) {
   if (request.method === "GET") {
     try {
       const db = drizzle(env.DB);
-      const result = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
+      const result = await db.select().from(partners).where(eq(partners.id, capitalizedId)).limit(1);
 
       if (result.length === 0) {
         return new Response(JSON.stringify({ error: "Partner not found" }), {
@@ -67,7 +70,7 @@ export async function onRequest(context: any) {
           partnerState: validatedData.partnerState,
           partnerZip: validatedData.partnerZip,
         })
-        .where(eq(partners.id, id))
+        .where(eq(partners.id, capitalizedId))
         .returning();
 
       if (result.length === 0) {
@@ -98,7 +101,7 @@ export async function onRequest(context: any) {
   if (request.method === "DELETE") {
     try {
       const db = drizzle(env.DB);
-      const result = await db.delete(partners).where(eq(partners.id, id)).returning();
+      const result = await db.delete(partners).where(eq(partners.id, capitalizedId)).returning();
 
       if (result.length === 0) {
         return new Response(JSON.stringify({ error: "Partner not found" }), {

@@ -32,13 +32,14 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
 
   // Manual fetch function
   const fetchPartner = useCallback(async (id: string) => {
-    console.log("=== fetchPartner called with id:", id);
+    const capitalizedId = id.toUpperCase();
+    console.log("=== fetchPartner called with id:", capitalizedId);
     setIsLoading(true);
     setError(null);
     setPartner(null); // Clear any previous partner data
     try {
-      console.log("Making API call to:", `/api/partners/${id}`);
-      const response = await fetch(`/api/partners/${id}`);
+      console.log("Making API call to:", `/api/partners/${capitalizedId}`);
+      const response = await fetch(`/api/partners/${capitalizedId}`);
       console.log("API response status:", response.status);
       if (!response.ok) {
         throw new Error("Partner not found");

@@ -69,7 +69,7 @@ export default function PartnerPortal() {
   };
 
   const handleLookup = async (id?: string) => {
-    const lookupId = id || partnerId;
+    const lookupId = (id || partnerId).toUpperCase();
     if (lookupId.length < 3 || lookupId.length > 9) {
       setError("Please enter a partner ID between 3 and 9 characters");
       return;

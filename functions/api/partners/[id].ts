@@ -5,10 +5,13 @@ import { eq } from "drizzle-orm";
 export async function onRequest(context: any) {
   const { params } = context;
   const { id } = params;
+  
+  // Capitalize the partner ID for consistent searching
+  const capitalizedId = id.toUpperCase();
 
   try {
     const db = drizzle(context.env.DB);
-    const result = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
+    const result = await db.select().from(partners).where(eq(partners.id, capitalizedId)).limit(1);
 
     if (result.length === 0) {
       return new Response(JSON.stringify({ error: "Partner not found" }), {
