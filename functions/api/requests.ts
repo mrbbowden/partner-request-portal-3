@@ -28,8 +28,17 @@ const insertRequestSchema = z.object({
   descriptionOfNeed: z.string().min(1, "Description of Need is required"),
 });
 
-async function sendToZapier(data: any) {
-  const webhookUrl = "https://hooks.zapier.com/hooks/catch/1234567890/abcdef123/";
+async function sendToZapier(data: any, env: any) {
+  const webhookUrl = env.ZAPIER_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
+    console.error("ZAPIER_WEBHOOK_URL environment variable not set");
+    return { success: false, error: "Webhook URL not configured" };
+  }
+
+  console.log("🔄 Attempting to send webhook to Zapier...");
+  console.log("📡 Webhook URL:", webhookUrl);
+  console.log("📦 Data being sent:", JSON.stringify(data, null, 2));
   
   try {
     const response = await fetch(webhookUrl, {
@@ -38,6 +47,7 @@ async function sendToZapier(data: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        requestId: data.requestId,
         partnerId: data.partnerId,
         partnerName: data.partnerName,
         caseManagerName: data.caseManagerName,
@@ -64,11 +74,30 @@ async function sendToZapier(data: any) {
       }),
     });
 
-    if (!response.ok) {
-      console.error("Zapier webhook failed:", response.status, response.statusText);
+    console.log("📊 Zapier response status:", response.status);
+    console.log("📊 Zapier response headers:", Object.fromEntries(response.headers.entries()));
+
+    if (response.ok) {
+      const responseText = await response.text();
+      console.log("✅ Zapier webhook successful!");
+      console.log("📄 Response body:", responseText);
+      return { success: true, status: response.status, response: responseText };
+    } else {
+      const errorText = await response.text();
+      console.error("❌ Zapier webhook failed!");
+      console.error("📊 Status:", response.status);
+      console.error("📊 Status Text:", response.statusText);
+      console.error("📄 Error Response:", errorText);
+      return { success: false, status: response.status, error: errorText };
     }
   } catch (error) {
-    console.error("Error sending to Zapier:", error);
+    console.error("💥 Error sending to Zapier:", error);
+    console.error("🔍 Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return { success: false, error: error.message };
   }
 }
 
@@ -132,8 +161,9 @@ export async function onRequest(context: any) {
       validatedData.descriptionOfNeed
     ).run();
 
-    // Send to Zapier (non-blocking)
-    sendToZapier({
+    // Send to Zapier with monitoring
+    const webhookData = {
+      requestId: requestId,
       ...validatedData,
       employedHousehold: validatedData.employedHousehold,
       partner: {
@@ -142,7 +172,19 @@ export async function onRequest(context: any) {
         caseManagerEmail: partner[0].caseManagerEmail,
         caseManagerPhone: partner[0].caseManagerPhone,
       },
-    });
+    };
+    
+    console.log("🚀 Request saved to database successfully. Request ID:", requestId);
+    
+    // Send to Zapier and log the result
+    const webhookResult = await sendToZapier(webhookData, env);
+    
+    if (webhookResult.success) {
+      console.log("🎉 Webhook sent successfully to Zapier!");
+    } else {
+      console.error("⚠️ Webhook failed, but request was saved to database");
+      console.error("🔍 Webhook error details:", webhookResult);
+    }
 
     return new Response(JSON.stringify({ 
       message: "Request submitted successfully",
