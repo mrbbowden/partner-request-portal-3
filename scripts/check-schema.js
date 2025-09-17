@@ -11,13 +11,7 @@ import { execSync } from 'child_process';
 // Updated required columns for current application structure
 const REQUIRED_PARTNERS_COLUMNS = [
   'id',
-  'partner_name',
-  'partner_email',
-  'partner_phone',
-  'partner_street_address',
-  'partner_city',
-  'partner_state',
-  'partner_zip'
+  'partner_name'
 ];
 
 const REQUIRED_REQUESTS_COLUMNS = [
@@ -42,6 +36,7 @@ const REQUIRED_REQUESTS_COLUMNS = [
   'employed_household',
   'english_speaking',
   'description_of_need',
+  'webhook_status',
   'created_at'
 ];
 

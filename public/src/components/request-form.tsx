@@ -11,12 +11,12 @@ import { useToast } from '../hooks/use-toast';
 interface Partner {
   id: string;
   partnerName: string;
-  partnerEmail: string;
-  partnerPhone: string;
-  partnerStreetAddress: string;
-  partnerCity: string;
-  partnerState: string;
-  partnerZip: string;
+  partnerEmail?: string;
+  partnerPhone?: string;
+  partnerStreetAddress?: string;
+  partnerCity?: string;
+  partnerState?: string;
+  partnerZip?: string;
 }
 
 interface RequestFormData {
@@ -348,16 +348,18 @@ export default function RequestForm({ partner, onRequestSubmitted, onClearForm }
                   className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                 />
               </div>
-              <div>
-                <Label htmlFor="descriptionOfNeed" className="text-sm font-medium text-gray-700">Description of Need *</Label>
-                <Textarea 
-                  id="descriptionOfNeed" 
-                  value={formData.descriptionOfNeed} 
-                  onChange={(e) => setFormData({ ...formData, descriptionOfNeed: e.target.value })}
-                  placeholder="Please describe the specific need or requirement..."
-                  className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 min-h-[100px]"
-                />
-              </div>
+            </div>
+            
+            {/* Description of Need - On its own line */}
+            <div>
+              <Label htmlFor="descriptionOfNeed" className="text-sm font-medium text-gray-700">Description of Need *</Label>
+              <Textarea 
+                id="descriptionOfNeed" 
+                value={formData.descriptionOfNeed} 
+                onChange={(e) => setFormData({ ...formData, descriptionOfNeed: e.target.value })}
+                placeholder="Please describe the specific need or requirement..."
+                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 min-h-[100px] w-full"
+              />
             </div>
 
             {/* Household Information Subsection */}

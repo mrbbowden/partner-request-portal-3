@@ -6,12 +6,12 @@ import { z } from "zod";
 export const partners = pgTable("partners", {
   id: varchar("id", { length: 9 }).primaryKey(),
   partnerName: text("partner_name").notNull(),
-  partnerEmail: text("partner_email").notNull(),
-  partnerPhone: text("partner_phone").notNull(),
-  partnerStreetAddress: text("partner_street_address").notNull(),
-  partnerCity: text("partner_city").notNull(),
-  partnerState: text("partner_state").notNull(),
-  partnerZip: text("partner_zip").notNull(),
+  partnerEmail: text("partner_email"),
+  partnerPhone: text("partner_phone"),
+  partnerStreetAddress: text("partner_street_address"),
+  partnerCity: text("partner_city"),
+  partnerState: text("partner_state"),
+  partnerZip: text("partner_zip"),
 });
 
 export const requests = pgTable("requests", {
@@ -38,6 +38,7 @@ export const requests = pgTable("requests", {
   employedHousehold: text("employed_household").notNull(),
   englishSpeaking: text("english_speaking").notNull(),
   descriptionOfNeed: text("description_of_need").notNull(),
+  webhookStatus: text("webhook_status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

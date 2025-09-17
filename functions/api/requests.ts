@@ -135,8 +135,8 @@ export async function onRequest(context: any) {
         id, partner_id, partner_name, case_manager_name, case_manager_email, case_manager_phone, 
         recipients_name, recipients_street_address, recipients_city, 
         recipients_state, recipients_zip, recipients_email, recipients_phone, race, ethnicity,
-        number_of_men_in_household, number_of_women_in_household, number_of_children_in_household, employed_household, english_speaking, description_of_need
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        number_of_men_in_household, number_of_women_in_household, number_of_children_in_household, employed_household, english_speaking, description_of_need, webhook_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       requestId,
       validatedData.partnerId,
@@ -158,7 +158,8 @@ export async function onRequest(context: any) {
       validatedData.numberOfChildrenInHousehold,
       validatedData.employedHousehold,
       validatedData.englishSpeaking,
-      validatedData.descriptionOfNeed
+      validatedData.descriptionOfNeed,
+      'pending'
     ).run();
 
     // Send to Zapier with monitoring
@@ -178,6 +179,12 @@ export async function onRequest(context: any) {
     
     // Send to Zapier and log the result
     const webhookResult = await sendToZapier(webhookData, env);
+    
+    // Update webhook status in database
+    const webhookStatus = webhookResult.success ? 'successful' : 'failed';
+    await env.DB.prepare(`
+      UPDATE requests SET webhook_status = ? WHERE id = ?
+    `).bind(webhookStatus, requestId).run();
     
     if (webhookResult.success) {
       console.log("🎉 Webhook sent successfully to Zapier!");

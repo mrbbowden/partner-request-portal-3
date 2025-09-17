@@ -14,12 +14,12 @@ import path from 'path';
 const EXPECTED_PARTNERS_SCHEMA = {
   id: { type: 'TEXT', notnull: false, pk: true },
   partner_name: { type: 'TEXT', notnull: true, pk: false },
-  partner_email: { type: 'TEXT', notnull: true, pk: false },
-  partner_phone: { type: 'TEXT', notnull: true, pk: false },
-  partner_street_address: { type: 'TEXT', notnull: true, pk: false },
-  partner_city: { type: 'TEXT', notnull: true, pk: false },
-  partner_state: { type: 'TEXT', notnull: true, pk: false },
-  partner_zip: { type: 'TEXT', notnull: true, pk: false }
+  partner_email: { type: 'TEXT', notnull: false, pk: false },
+  partner_phone: { type: 'TEXT', notnull: false, pk: false },
+  partner_street_address: { type: 'TEXT', notnull: false, pk: false },
+  partner_city: { type: 'TEXT', notnull: false, pk: false },
+  partner_state: { type: 'TEXT', notnull: false, pk: false },
+  partner_zip: { type: 'TEXT', notnull: false, pk: false }
 };
 
 const EXPECTED_REQUESTS_SCHEMA = {
@@ -44,6 +44,7 @@ const EXPECTED_REQUESTS_SCHEMA = {
   employed_household: { type: 'TEXT', notnull: true, pk: false },
   english_speaking: { type: 'TEXT', notnull: true, pk: false },
   description_of_need: { type: 'TEXT', notnull: true, pk: false },
+  webhook_status: { type: 'TEXT', notnull: true, pk: false },
   created_at: { type: 'TIMESTAMP', notnull: true, pk: false }
 };
 

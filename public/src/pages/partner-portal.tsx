@@ -7,12 +7,12 @@ import { getPartnerIdCookie, setPartnerIdCookie, clearPartnerIdCookie } from "..
 interface Partner {
   id: string;
   partnerName: string;
-  partnerEmail: string;
-  partnerPhone: string;
-  partnerStreetAddress: string;
-  partnerCity: string;
-  partnerState: string;
-  partnerZip: string;
+  partnerEmail?: string;
+  partnerPhone?: string;
+  partnerStreetAddress?: string;
+  partnerCity?: string;
+  partnerState?: string;
+  partnerZip?: string;
 }
 
 export default function PartnerPortal() {
@@ -212,35 +212,48 @@ export default function PartnerPortal() {
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
                   <Building2 className="w-4 h-4 text-gray-600 mr-2" />
-                  <span className="text-gray-800 font-medium">Partner Name</span>
+                  <span className="text-sm font-medium text-gray-700">Partner Name</span>
                 </div>
-                <p className="text-lg font-semibold text-gray-900">{partner.partnerName}</p>
+                <p className="text-base font-medium text-gray-900">{partner.partnerName}</p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
                   <Mail className="w-4 h-4 text-gray-600 mr-2" />
-                  <span className="text-gray-800 font-medium">Partner Email</span>
+                  <span className="text-sm font-medium text-gray-700">Partner Email</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900 break-all">{partner.partnerEmail}</p>
+                <p className="text-base font-medium text-gray-900 break-all">
+                  {partner.partnerEmail || 'Not provided'}
+                </p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
                   <Phone className="w-4 h-4 text-gray-600 mr-2" />
-                  <span className="text-gray-800 font-medium">Partner Phone</span>
+                  <span className="text-sm font-medium text-gray-700">Partner Phone</span>
                 </div>
-                <p className="text-lg font-semibold text-gray-900">{partner.partnerPhone}</p>
+                <p className="text-base font-medium text-gray-900">
+                  {partner.partnerPhone || 'Not provided'}
+                </p>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center mb-2">
                   <MapPin className="w-4 h-4 text-gray-600 mr-2" />
-                  <span className="text-gray-800 font-medium">Partner Address</span>
+                  <span className="text-sm font-medium text-gray-700">Partner Address</span>
                 </div>
-                <p className="text-sm font-medium text-gray-900">
-                  {partner.partnerStreetAddress}<br />
-                  {partner.partnerCity}, {partner.partnerState} {partner.partnerZip}
+                <p className="text-base font-medium text-gray-900">
+                  {partner.partnerStreetAddress ? (
+                    <>
+                      {partner.partnerStreetAddress}<br />
+                      {partner.partnerCity && partner.partnerState && partner.partnerZip ? 
+                        `${partner.partnerCity}, ${partner.partnerState} ${partner.partnerZip}` : 
+                        'Incomplete address'
+                      }
+                    </>
+                  ) : (
+                    'Not provided'
+                  )}
                 </p>
               </div>
             </div>

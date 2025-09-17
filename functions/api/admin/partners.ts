@@ -5,12 +5,12 @@ import { z } from "zod";
 const partnerSchema = z.object({
   id: z.string().min(3, "Partner ID must be at least 3 characters").max(9, "Partner ID must be at most 9 characters"),
   partnerName: z.string().min(1, "Partner Name is required"),
-  partnerEmail: z.string().email("Invalid email format"),
-  partnerPhone: z.string().min(1, "Partner Phone is required"),
-  partnerStreetAddress: z.string().min(1, "Partner Street Address is required"),
-  partnerCity: z.string().min(1, "Partner City is required"),
-  partnerState: z.string().min(1, "Partner State is required"),
-  partnerZip: z.string().min(1, "Partner Zip is required"),
+  partnerEmail: z.string().email("Invalid email format").optional(),
+  partnerPhone: z.string().optional(),
+  partnerStreetAddress: z.string().optional(),
+  partnerCity: z.string().optional(),
+  partnerState: z.string().optional(),
+  partnerZip: z.string().optional(),
 });
 
 export async function onRequest(context: any) {
@@ -51,12 +51,12 @@ export async function onRequest(context: any) {
       await db.insert(partners).values({
         id: validatedData.id,
         partnerName: validatedData.partnerName,
-        partnerEmail: validatedData.partnerEmail,
-        partnerPhone: validatedData.partnerPhone,
-        partnerStreetAddress: validatedData.partnerStreetAddress,
-        partnerCity: validatedData.partnerCity,
-        partnerState: validatedData.partnerState,
-        partnerZip: validatedData.partnerZip,
+        partnerEmail: validatedData.partnerEmail || null,
+        partnerPhone: validatedData.partnerPhone || null,
+        partnerStreetAddress: validatedData.partnerStreetAddress || null,
+        partnerCity: validatedData.partnerCity || null,
+        partnerState: validatedData.partnerState || null,
+        partnerZip: validatedData.partnerZip || null,
       });
 
       return new Response(JSON.stringify({ message: "Partner created successfully" }), {
