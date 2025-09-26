@@ -111,7 +111,7 @@ async function sendToZapier(request: any, partner: any) {
 
     console.log("Successfully sent to Zapier:", response.status);
   } catch (error) {
-    console.error("Failed to send to Zapier:", error.message);
+    console.error("Failed to send to Zapier:", error instanceof Error ? error.message : String(error));
     // Don't throw error - we don't want to break form submission if Zapier fails
   }
 }

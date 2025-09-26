@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Handshake, User, Settings, Search, AlertCircle, CheckCircle, Building2, Phone, Mail, MapPin, Sparkles } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Handshake, User, Settings, Search, AlertCircle, CheckCircle, Building2, Phone, Mail, MapPin, Sparkles, Loader2, ChevronDown, Check } from "lucide-react";
 import { Link } from "wouter";
 import RequestForm from "../components/request-form";
 import { getPartnerIdCookie, setPartnerIdCookie, clearPartnerIdCookie } from "../lib/cookies";
@@ -21,6 +21,13 @@ export default function PartnerPortal() {
   const [partnerId, setPartnerId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Partner[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check for existing partner ID cookie on component mount
   useEffect(() => {
@@ -68,6 +75,32 @@ export default function PartnerPortal() {
     clearPartnerIdCookie();
   };
 
+  // Search function for dynamic lookup
+  const searchPartners = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/partners/search?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const results = await response.json();
+        setSearchResults(results);
+        setShowDropdown(results.length > 0);
+        setSelectedIndex(-1);
+      }
+    } catch (err) {
+      console.log("Search error:", err);
+      setSearchResults([]);
+      setShowDropdown(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
   const handleLookup = async (id?: string) => {
     const lookupId = (id || partnerId).toUpperCase();
     if (lookupId.length < 3 || lookupId.length > 9) {
@@ -78,6 +111,7 @@ export default function PartnerPortal() {
     setIsLoading(true);
     setError(null);
     setPartner(null);
+    setShowDropdown(false); // Hide dropdown when fetching specific partner
 
     try {
       const response = await fetch(`/api/partners/${lookupId}`);
@@ -94,10 +128,87 @@ export default function PartnerPortal() {
     }
   };
 
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (partnerId.length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        searchPartners(partnerId);
+      }, 300); // 300ms debounce
+    } else {
+      setSearchResults([]);
+      setShowDropdown(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [partnerId, searchPartners]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Handle keyboard navigation
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && partnerId.length >= 3 && partnerId.length <= 9) {
+    if (showDropdown && searchResults.length > 0) {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedIndex(prev => 
+            prev < searchResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (selectedIndex >= 0 && selectedIndex < searchResults.length) {
+            selectPartner(searchResults[selectedIndex]);
+          } else if (partnerId.length >= 3 && partnerId.length <= 9) {
+            handleLookup();
+          }
+          break;
+        case "Escape":
+          setShowDropdown(false);
+          setSelectedIndex(-1);
+          break;
+      }
+    } else if (e.key === "Enter" && partnerId.length >= 3 && partnerId.length <= 9) {
       handleLookup();
     }
+  };
+
+  // Select a partner from search results
+  const selectPartner = (selectedPartner: Partner) => {
+    setPartnerId(selectedPartner.id);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    setSearchResults([]);
+    handleLookup(selectedPartner.id);
   };
 
   const handleLookupClick = () => {
@@ -144,22 +255,69 @@ export default function PartnerPortal() {
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-1">Partner Lookup</h3>
-              <p className="text-gray-600">Enter a partner ID (3-9 characters) to get started</p>
+              <p className="text-gray-600">Type your partner ID or name to search and select from the dropdown</p>
             </div>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <input
+                ref={inputRef}
                 type="text"
-                placeholder="Enter Partner ID (e.g., ABC123)"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-lg"
+                placeholder="Type partner ID or name..."
+                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-lg"
                 maxLength={9}
                 value={partnerId}
                 onChange={(e) => setPartnerId(e.target.value.toUpperCase())}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyPress}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowDropdown(true);
+                  }
+                }}
                 disabled={isLoading}
               />
+              {(isSearching || showDropdown) && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {isSearching ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              )}
+              
+              {/* Search Results Dropdown */}
+              {showDropdown && searchResults.length > 0 && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                >
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={result.id}
+                      className={`px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${
+                        index === selectedIndex
+                          ? "bg-blue-50 text-blue-700"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => selectPartner(result)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{result.id}</div>
+                          <div className="text-gray-600 text-xs">
+                            {result.partnerName}
+                          </div>
+                        </div>
+                        {index === selectedIndex && (
+                          <Check className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <button 
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center font-semibold"

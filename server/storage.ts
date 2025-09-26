@@ -23,21 +23,24 @@ export class MemStorage implements IStorage {
     const samplePartners: Partner[] = [
       {
         id: "1234",
-        fullName: "Sarah Johnson",
-        email: "sarah.johnson@example.com",
-        phone: "(555) 123-4567"
+        partnerName: "Sarah Johnson",
+        referringCaseManager: "Sarah Johnson",
+        caseManagerEmail: "sarah.johnson@example.com",
+        caseManagerPhone: "(555) 123-4567"
       },
       {
         id: "5678",
-        fullName: "Michael Chen",
-        email: "michael.chen@example.com",
-        phone: "(555) 987-6543"
+        partnerName: "Michael Chen",
+        referringCaseManager: "Michael Chen",
+        caseManagerEmail: "michael.chen@example.com",
+        caseManagerPhone: "(555) 987-6543"
       },
       {
         id: "9876",
-        fullName: "Emma Rodriguez",
-        email: "emma.rodriguez@example.com",
-        phone: "(555) 456-7890"
+        partnerName: "Emma Rodriguez",
+        referringCaseManager: "Emma Rodriguez",
+        caseManagerEmail: "emma.rodriguez@example.com",
+        caseManagerPhone: "(555) 456-7890"
       }
     ];
 
