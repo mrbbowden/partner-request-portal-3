@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from "react";
+import React, { useState, useEffect, useImperativeHandle, forwardRef, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, ChevronDown, Check } from "lucide-react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
@@ -9,8 +9,12 @@ import { setPartnerIdCookie, clearPartnerIdCookie } from "../lib/cookies";
 interface Partner {
   id: string;
   partnerName: string;
-  caseManagerEmail: string;
-  caseManagerPhone: string;
+  partnerEmail?: string;
+  partnerPhone?: string;
+  partnerStreetAddress?: string;
+  partnerCity?: string;
+  partnerState?: string;
+  partnerZip?: string;
 }
 
 interface PartnerLookupProps {
@@ -29,6 +33,39 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
   const [partner, setPartner] = useState<Partner | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Partner[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Search function for dynamic lookup
+  const searchPartners = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/partners/search?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const results = await response.json();
+        setSearchResults(results);
+        setShowDropdown(results.length > 0);
+        setSelectedIndex(-1);
+      }
+    } catch (err) {
+      console.log("Search error:", err);
+      setSearchResults([]);
+      setShowDropdown(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
 
   // Manual fetch function
   const fetchPartner = useCallback(async (id: string) => {
@@ -37,6 +74,7 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
     setIsLoading(true);
     setError(null);
     setPartner(null); // Clear any previous partner data
+    setShowDropdown(false); // Hide dropdown when fetching specific partner
     try {
       console.log("Making API call to:", `/api/partners/${capitalizedId}`);
       const response = await fetch(`/api/partners/${capitalizedId}`);
@@ -82,6 +120,28 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
     }
   }, [initialPartnerId, fetchPartner]);
 
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (partnerId.length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        searchPartners(partnerId);
+      }, 300); // 300ms debounce
+    } else {
+      setSearchResults([]);
+      setShowDropdown(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [partnerId, searchPartners]);
+
   // Clear partner info when partnerId changes (user starts typing new ID)
   useEffect(() => {
     if (partnerId.length > 0 && partnerId.length < 4) {
@@ -90,11 +150,45 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
     }
   }, [partnerId, onPartnerNotFound]);
 
-  // Handle Enter key press
+  // Handle keyboard navigation
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && partnerId.length === 4) {
+    if (showDropdown && searchResults.length > 0) {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedIndex(prev => 
+            prev < searchResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (selectedIndex >= 0 && selectedIndex < searchResults.length) {
+            selectPartner(searchResults[selectedIndex]);
+          } else if (partnerId.length === 4) {
+            handleGoClick();
+          }
+          break;
+        case "Escape":
+          setShowDropdown(false);
+          setSelectedIndex(-1);
+          break;
+      }
+    } else if (e.key === "Enter" && partnerId.length === 4) {
       handleGoClick();
     }
+  };
+
+  // Select a partner from search results
+  const selectPartner = (selectedPartner: Partner) => {
+    setPartnerId(selectedPartner.id);
+    setShowDropdown(false);
+    setSelectedIndex(-1);
+    setSearchResults([]);
+    fetchPartner(selectedPartner.id);
   };
 
   // Handle Go button click
@@ -106,12 +200,35 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
     }
   };
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Expose clear method
   useImperativeHandle(ref, () => ({
     clearPartnerId: () => {
       setPartnerId("");
       setPartner(null);
       setError(null);
+      setSearchResults([]);
+      setShowDropdown(false);
+      setSelectedIndex(-1);
       // Clear partner info when clearing the input
       onPartnerNotFound();
       // Clear the cookie when clearing the partner ID
@@ -124,27 +241,75 @@ const PartnerLookup = forwardRef<PartnerLookupRef, PartnerLookupProps>(
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Partner Lookup</h3>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Enter your 4-digit Partner ID to access the request portal.
+          Type your Partner ID or partner name to search and select from the dropdown.
         </p>
       </div>
 
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="partnerId">Partner ID</Label>
+        <div className="relative">
+          <Label htmlFor="partnerId">Partner ID or Name</Label>
           <div className="flex gap-2 mt-1">
-            <Input
-              id="partnerId"
-              type="text"
-              placeholder="0000"
-              maxLength={4}
-              value={partnerId}
-              onChange={(e) => setPartnerId(e.target.value.toUpperCase().replace(/\D/g, ""))}
-              onKeyPress={handleKeyPress}
-              className="flex-1"
-            />
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                id="partnerId"
+                type="text"
+                placeholder="Type partner ID or name..."
+                value={partnerId}
+                onChange={(e) => setPartnerId(e.target.value.toUpperCase())}
+                onKeyDown={handleKeyPress}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowDropdown(true);
+                  }
+                }}
+                className="pr-8"
+              />
+              {(isSearching || showDropdown) && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  {isSearching ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+              )}
+              
+              {/* Search Results Dropdown */}
+              {showDropdown && searchResults.length > 0 && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto"
+                >
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={result.id}
+                      className={`px-3 py-2 cursor-pointer text-sm border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${
+                        index === selectedIndex
+                          ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                          : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => selectPartner(result)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{result.id}</div>
+                          <div className="text-gray-600 dark:text-gray-400 text-xs">
+                            {result.partnerName}
+                          </div>
+                        </div>
+                        {index === selectedIndex && (
+                          <Check className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <Button
               onClick={handleGoClick}
-              disabled={partnerId.length !== 4 || isLoading}
+              disabled={partnerId.length < 3 || isLoading}
               className="min-w-[80px]"
             >
               {isLoading ? (
